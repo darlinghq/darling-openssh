@@ -47,6 +47,8 @@ add_definitions(
 # To be linked to all binaries
 set(LIBS crypto098 z resolv-darwin openssh compat)
 
+set(LIBEXEC_PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC -ggdb")
 set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
 set(CMAKE_EXE_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
@@ -295,10 +297,78 @@ add_darling_executable(sshd
 
 target_link_libraries(ssh ${LIBS} sandbox)
 
-# CMAKE has the wrong permissions for libexec
-install(TARGETS sshd
-	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+install(TARGETS sshd DESTINATION libexec/darling/usr/sbin)
+
+add_darling_executable(scp
+	openssh/scp.c
+	openssh/progressmeter.c
+	openssh/bufaux.c
+)
+target_link_libraries(scp ${LIBS})
+install(TARGETS scp DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(ssh-add
+	openssh/ssh-add.c
+)
+target_link_libraries(ssh-add ${LIBS})
+install(TARGETS ssh-add DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(ssh-agent
+	openssh/ssh-agent.c
+	openssh/ssh-pkcs11-client.c
+)
+target_link_libraries(ssh-agent ${LIBS})
+install(TARGETS ssh-agent DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(ssh-keygen
+	openssh/ssh-keygen.c
+)
+target_link_libraries(ssh-keygen ${LIBS})
+install(TARGETS ssh-keygen DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(ssh-keysign
+	openssh/ssh-keysign.c
+	openssh/readconf.c
+)
+target_link_libraries(ssh-keysign ${LIBS})
+install(TARGETS ssh-keysign
+	PERMISSIONS ${LIBEXEC_PERMS}
 	DESTINATION libexec/darling/usr/libexec)
+
+add_darling_executable(ssh-pkcs11-helper
+	openssh/ssh-pkcs11-helper.c
+	openssh/ssh-pkcs11.c
+)
+target_link_libraries(ssh-pkcs11-helper ${LIBS})
+install(TARGETS ssh-pkcs11-helper
+	PERMISSIONS ${LIBEXEC_PERMS}
+	DESTINATION libexec/darling/usr/libexec)
+
+add_darling_executable(ssh-keyscan
+	openssh/ssh-keyscan.c
+)
+target_link_libraries(ssh-keyscan ${LIBS})
+install(TARGETS ssh-keyscan DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(sftp-server
+	openssh/sftp-server.c
+	openssh/sftp-common.c
+	openssh/sftp-server-main.c
+)
+target_link_libraries(sftp-server ${LIBS})
+install(TARGETS sftp-server
+	PERMISSIONS ${LIBEXEC_PERMS}
+	DESTINATION libexec/darling/usr/libexec)
+
+add_darling_executable(sftp
+	openssh/progressmeter.c
+	openssh/sftp.c
+	openssh/sftp-client.c
+	openssh/sftp-common.c
+	openssh/sftp-glob.c
+)
+target_link_libraries(sftp ${LIBS})
+install(TARGETS sftp DESTINATION libexec/darling/usr/bin)
 
 # Manpages and shell scripts
 install(DIRECTORY usr DESTINATION libexec/darling)
