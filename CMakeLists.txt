@@ -2,31 +2,41 @@ project(openssh)
 
 cmake_minimum_required(VERSION 2.4.0)
 
+# Automatically escape macros
+cmake_policy(SET CMP0005 NEW)
+
 include(darling_exe)
 
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/gensrc)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/openssh)
-include_directories(${DARLING_TOP_DIRECTORY}/src/libc/include/FreeBSD)
-include_directories(${DARLING_TOP_DIRECTORY}/src/libc/include/NetBSD/)
-include_directories(${DARLING_TOP_DIRECTORY}/src/external/openssl/src/include)
+
+include_directories(
+	${DARLING_TOP_DIRECTORY}/src/libc/include/FreeBSD
+	${DARLING_TOP_DIRECTORY}/src/libc/include/NetBSD/
+	${DARLING_TOP_DIRECTORY}/src/external/openssl/src/include
+	${DARLING_TOP_DIRECTORY}/src/libinfo/include
+	${DARLING_TOP_DIRECTORY}/src/external/zlib
+)
 
 add_definitions(
-	"-D_FORTIFY_SOURCE=2
-	-DSSHDIR=/usr/bin/etc
-	-D_PATH_SSH_PROGRAM=/usr/bin/bin/ssh
-	-D_PATH_SSH_ASKPASS_DEFAULT=/usr/bin/libexec/ssh-askpass
-	-D_PATH_SFTP_SERVER=/usr/bin/libexec/sftp-server
-	-D_PATH_SSH_KEY_SIGN=/usr/bin/libexec/ssh-keysign
-	-D_PATH_SSH_PKCS11_HELPER=/usr/bin/libexec/ssh-pkcs11-helper
-	-D_PATH_SSH_PIDDIR=/var/run
-	-D_PATH_PRIVSEP_CHROOT_DIR=/var/empty
-	-DHAVE_CONFIG_H"
+	-D_FORTIFY_SOURCE=2
+	-DSSHDIR="/usr/bin/etc"
+	-D_PATH_SSH_PROGRAM="/usr/bin/bin/ssh"
+	-D_PATH_SSH_ASKPASS_DEFAULT="/usr/bin/libexec/ssh-askpass"
+	-D_PATH_SFTP_SERVER="/usr/bin/libexec/sftp-server"
+	-D_PATH_SSH_KEY_SIGN="/usr/bin/libexec/ssh-keysign"
+	-D_PATH_SSH_PKCS11_HELPER="/usr/bin/libexec/ssh-pkcs11-helper"
+	-D_PATH_SSH_PIDDIR="/var/run"
+	-D_PATH_PRIVSEP_CHROOT_DIR="/var/empty"
+	-DHAVE_CONFIG_H
 )
 
 # Hide warnings
 add_definitions(
 	-Wno-macro-redefined
 	-Wno-deprecated-declarations
+	-Wno-implicit-function-declaration
+	-Wno-incompatible-pointer-types
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC -ggdb")
