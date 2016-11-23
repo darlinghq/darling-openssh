@@ -7,8 +7,10 @@ cmake_policy(SET CMP0005 NEW)
 
 include(darling_exe)
 
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/gensrc)
-include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/openssh)
+include_directories(BEFORE
+	${CMAKE_CURRENT_SOURCE_DIR}/gensrc
+	${CMAKE_CURRENT_SOURCE_DIR}/openssh
+)
 
 include_directories(
 	${DARLING_TOP_DIRECTORY}/src/libc/include/FreeBSD
@@ -16,16 +18,17 @@ include_directories(
 	${DARLING_TOP_DIRECTORY}/src/external/openssl/src/include
 	${DARLING_TOP_DIRECTORY}/src/libinfo/include
 	${DARLING_TOP_DIRECTORY}/src/external/zlib
+	${DARLING_TOP_DIRECTORY}/src/sandbox
 )
 
 add_definitions(
 	-D_FORTIFY_SOURCE=2
-	-DSSHDIR="/usr/bin/etc"
-	-D_PATH_SSH_PROGRAM="/usr/bin/bin/ssh"
-	-D_PATH_SSH_ASKPASS_DEFAULT="/usr/bin/libexec/ssh-askpass"
-	-D_PATH_SFTP_SERVER="/usr/bin/libexec/sftp-server"
-	-D_PATH_SSH_KEY_SIGN="/usr/bin/libexec/ssh-keysign"
-	-D_PATH_SSH_PKCS11_HELPER="/usr/bin/libexec/ssh-pkcs11-helper"
+	-DSSHDIR="/etc"
+	-D_PATH_SSH_PROGRAM="/usr/bin/ssh"
+	-D_PATH_SSH_ASKPASS_DEFAULT="/usr/libexec/ssh-askpass"
+	-D_PATH_SFTP_SERVER="/usr/libexec/sftp-server"
+	-D_PATH_SSH_KEY_SIGN="/usr/libexec/ssh-keysign"
+	-D_PATH_SSH_PKCS11_HELPER="/usr/libexec/ssh-pkcs11-helper"
 	-D_PATH_SSH_PIDDIR="/var/run"
 	-D_PATH_PRIVSEP_CHROOT_DIR="/var/empty"
 	-DHAVE_CONFIG_H
@@ -37,7 +40,12 @@ add_definitions(
 	-Wno-deprecated-declarations
 	-Wno-implicit-function-declaration
 	-Wno-incompatible-pointer-types
+	-Wno-pointer-sign
+	-Wno-visibility
 )
+
+# To be linked to all binaries
+set(LIBS crypto z resolv openssh compat)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC -ggdb")
 set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
@@ -57,9 +65,7 @@ add_library(openssh STATIC
 	openssh/sshbuf-getput-crypto.c
 	openssh/krl.c
 	openssh/bitmap.c
-)
 
-add_library(ssh STATIC
 	openssh/authfd.c
 	openssh/authfile.c
 	openssh/bufaux.c
@@ -146,5 +152,156 @@ add_library(ssh STATIC
 	openssh/platform-tracing.c
 )
 
+add_library(compat STATIC
+	openssh/openbsd-compat/base64.c
+	openssh/openbsd-compat/basename.c
+	openssh/openbsd-compat/bcrypt_pbkdf.c
+	openssh/openbsd-compat/bindresvport.c
+	openssh/openbsd-compat/blowfish.c
+	openssh/openbsd-compat/daemon.c
+	openssh/openbsd-compat/dirname.c
+	openssh/openbsd-compat/fmt_scaled.c
+	openssh/openbsd-compat/getcwd.c
+	openssh/openbsd-compat/getgrouplist.c
+	openssh/openbsd-compat/getopt_long.c
+	openssh/openbsd-compat/getrrsetbyname.c
+	openssh/openbsd-compat/glob.c
+	openssh/openbsd-compat/inet_aton.c
+	openssh/openbsd-compat/inet_ntoa.c
+	openssh/openbsd-compat/inet_ntop.c
+	openssh/openbsd-compat/mktemp.c
+	openssh/openbsd-compat/pwcache.c
+	openssh/openbsd-compat/readpassphrase.c
+	openssh/openbsd-compat/reallocarray.c
+	openssh/openbsd-compat/realpath.c
+	openssh/openbsd-compat/rresvport.c
+	openssh/openbsd-compat/setenv.c
+	openssh/openbsd-compat/setproctitle.c
+	openssh/openbsd-compat/sha1.c
+	openssh/openbsd-compat/sha2.c
+	openssh/openbsd-compat/rmd160.c
+	openssh/openbsd-compat/md5.c
+	openssh/openbsd-compat/sigact.c
+	openssh/openbsd-compat/strlcat.c
+	openssh/openbsd-compat/strlcpy.c
+	openssh/openbsd-compat/strmode.c
+	openssh/openbsd-compat/strnlen.c
+	openssh/openbsd-compat/strptime.c
+	openssh/openbsd-compat/strsep.c
+	openssh/openbsd-compat/strtonum.c
+	openssh/openbsd-compat/strtoll.c
+	openssh/openbsd-compat/strtoul.c
+	openssh/openbsd-compat/strtoull.c
+	openssh/openbsd-compat/timingsafe_bcmp.c
+	openssh/openbsd-compat/vis.c
+	openssh/openbsd-compat/blowfish.c
+	openssh/openbsd-compat/bcrypt_pbkdf.c
+	openssh/openbsd-compat/explicit_bzero.c
+	openssh/openbsd-compat/arc4random.c
+	openssh/openbsd-compat/bsd-asprintf.c
+	openssh/openbsd-compat/bsd-closefrom.c
+	openssh/openbsd-compat/bsd-cray.c
+	openssh/openbsd-compat/bsd-cygwin_util.c
+	openssh/openbsd-compat/bsd-getpeereid.c
+	openssh/openbsd-compat/getrrsetbyname-ldns.c
+	openssh/openbsd-compat/bsd-err.c
+	openssh/openbsd-compat/bsd-misc.c
+	openssh/openbsd-compat/bsd-nextstep.c
+	openssh/openbsd-compat/bsd-openpty.c
+	openssh/openbsd-compat/bsd-poll.c
+	openssh/openbsd-compat/bsd-setres_id.c
+	openssh/openbsd-compat/bsd-snprintf.c
+	openssh/openbsd-compat/bsd-statvfs.c
+	openssh/openbsd-compat/bsd-waitpid.c
+	openssh/openbsd-compat/fake-rfc2553.c
+	openssh/openbsd-compat/openssl-compat.c
+	openssh/openbsd-compat/xmmap.c
+	openssh/openbsd-compat/xcrypt.c
+	openssh/openbsd-compat/kludge-fd_set.c
+	openssh/openbsd-compat/port-aix.c
+	openssh/openbsd-compat/port-irix.c
+	openssh/openbsd-compat/port-linux.c
+	openssh/openbsd-compat/port-solaris.c
+	openssh/openbsd-compat/port-tun.c
+	openssh/openbsd-compat/port-uw.c
+)
+
+add_darling_executable(ssh
+	openssh/ssh.c
+	openssh/readconf.c
+	openssh/clientloop.c
+	openssh/sshtty.c
+	openssh/sshconnect.c
+	openssh/sshconnect1.c
+	openssh/sshconnect2.c
+	openssh/mux.c
+)
+
+target_link_libraries(ssh ${LIBS})
+install(TARGETS ssh DESTINATION libexec/darling/usr/bin)
+
+add_darling_executable(sshd
+	openssh/sshd.c
+	openssh/auth-rhosts.c
+	openssh/auth-passwd.c
+	openssh/auth-rsa.c
+	openssh/auth-rh-rsa.c
+	openssh/audit.c
+	openssh/audit-bsm.c
+	openssh/audit-linux.c
+	openssh/platform.c
+	openssh/sshpty.c
+	openssh/sshlogin.c
+	openssh/servconf.c
+	openssh/serverloop.c
+	openssh/auth.c
+	openssh/auth1.c
+	openssh/auth2.c
+	openssh/auth-options.c
+	openssh/session.c
+	openssh/auth-chall.c
+	openssh/auth2-chall.c
+	openssh/groupaccess.c
+	openssh/auth-skey.c
+	openssh/auth-bsdauth.c
+	openssh/auth2-hostbased.c
+	openssh/auth2-kbdint.c
+	openssh/auth2-none.c
+	openssh/auth2-passwd.c
+	openssh/auth2-pubkey.c
+	openssh/monitor_mm.c
+	openssh/monitor.c
+	openssh/monitor_wrap.c
+	openssh/auth-krb5.c
+	openssh/auth2-gss.c
+	openssh/gss-serv.c
+	openssh/gss-serv-krb5.c
+	openssh/loginrec.c
+	openssh/auth-pam.c
+	openssh/auth-shadow.c
+	openssh/auth-sia.c
+	openssh/md5crypt.c
+	openssh/sftp-server.c
+	openssh/sftp-common.c
+	openssh/sandbox-null.c
+	openssh/sandbox-rlimit.c
+	openssh/sandbox-systrace.c
+	openssh/sandbox-darwin.c
+	openssh/sandbox-seccomp-filter.c
+	openssh/sandbox-capsicum.c
+	openssh/sandbox-pledge.c
+	openssh/sandbox-solaris.c
+)
+
+target_link_libraries(ssh ${LIBS} sandbox)
+
+# CMAKE has the wrong permissions for libexec
+install(TARGETS sshd
+	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	DESTINATION libexec/darling/usr/libexec)
+
 # Manpages and shell scripts
 install(DIRECTORY usr DESTINATION libexec/darling)
+
+install(DIRECTORY etc DESTINATION libexec/darling)
+
