@@ -7,19 +7,26 @@ include(darling_exe)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/gensrc)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/openssh)
 include_directories(${DARLING_TOP_DIRECTORY}/src/libc/include/FreeBSD)
+include_directories(${DARLING_TOP_DIRECTORY}/src/libc/include/NetBSD/)
 include_directories(${DARLING_TOP_DIRECTORY}/src/external/openssl/src/include)
 
 add_definitions(
-	_FORTIFY_SOURCE=2
-	SSHDIR=/usr/bin/etc
-	_PATH_SSH_PROGRAM=/usr/bin/bin/ssh
-	_PATH_SSH_ASKPASS_DEFAULT=/usr/bin/libexec/ssh-askpass
-	_PATH_SFTP_SERVER=/usr/bin/libexec/sftp-server
-	_PATH_SSH_KEY_SIGN=/usr/bin/libexec/ssh-keysign
-	_PATH_SSH_PKCS11_HELPER=/usr/bin/libexec/ssh-pkcs11-helper
-	_PATH_SSH_PIDDIR=/var/run
-	_PATH_PRIVSEP_CHROOT_DIR=/var/empty
-	HAVE_CONFIG_H
+	"-D_FORTIFY_SOURCE=2
+	-DSSHDIR=/usr/bin/etc
+	-D_PATH_SSH_PROGRAM=/usr/bin/bin/ssh
+	-D_PATH_SSH_ASKPASS_DEFAULT=/usr/bin/libexec/ssh-askpass
+	-D_PATH_SFTP_SERVER=/usr/bin/libexec/sftp-server
+	-D_PATH_SSH_KEY_SIGN=/usr/bin/libexec/ssh-keysign
+	-D_PATH_SSH_PKCS11_HELPER=/usr/bin/libexec/ssh-pkcs11-helper
+	-D_PATH_SSH_PIDDIR=/var/run
+	-D_PATH_PRIVSEP_CHROOT_DIR=/var/empty
+	-DHAVE_CONFIG_H"
+)
+
+# Hide warnings
+add_definitions(
+	-Wno-macro-redefined
+	-Wno-deprecated-declarations
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC -ggdb")
