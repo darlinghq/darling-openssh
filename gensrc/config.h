@@ -786,7 +786,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `memset_s' function. */
-#define HAVE_MEMSET_S 1
+//#define HAVE_MEMSET_S 1
 
 /* Define to 1 if you have the `mkdtemp' function. */
 #define HAVE_MKDTEMP 1
