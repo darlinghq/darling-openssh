@@ -1270,7 +1270,7 @@
 /* #undef HAVE_TIME_IN_UTMPX */
 
 /* Define to 1 if you have the `timingsafe_bcmp' function. */
-#define HAVE_TIMINGSAFE_BCMP 1
+//#define HAVE_TIMINGSAFE_BCMP 1
 
 /* Define to 1 if you have the <tmpdir.h> header file. */
 /* #undef HAVE_TMPDIR_H */

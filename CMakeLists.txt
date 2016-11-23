@@ -45,7 +45,7 @@ add_definitions(
 )
 
 # To be linked to all binaries
-set(LIBS crypto z resolv openssh compat)
+set(LIBS crypto098 z resolv-darwin openssh compat)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC -ggdb")
 set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
