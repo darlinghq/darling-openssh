@@ -13,12 +13,12 @@ include_directories(BEFORE
 )
 
 include_directories(
-	${DARLING_TOP_DIRECTORY}/src/libc/include/FreeBSD
-	${DARLING_TOP_DIRECTORY}/src/libc/include/NetBSD/
-	${DARLING_TOP_DIRECTORY}/src/external/openssl/src/include
-	${DARLING_TOP_DIRECTORY}/src/libinfo/include
-	${DARLING_TOP_DIRECTORY}/src/external/zlib
-	${DARLING_TOP_DIRECTORY}/src/sandbox
+	${CMAKE_SOURCE_DIR}/src/libc/include/FreeBSD
+	${CMAKE_SOURCE_DIR}/src/libc/include/NetBSD/
+	${CMAKE_SOURCE_DIR}/src/external/openssl/src/include
+	${CMAKE_SOURCE_DIR}/src/libinfo/include
+	${CMAKE_SOURCE_DIR}/src/external/zlib
+	${CMAKE_SOURCE_DIR}/src/sandbox
 )
 
 add_definitions(
@@ -44,19 +44,12 @@ add_definitions(
 	-Wno-visibility
 )
 
-set(LIBS openssh compat crypto098 z resolv-darwin)
+set(LIBS openssh crypto098 z resolv-darwin)
 
 set(LIBEXEC_PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -fwrapv -fPIC")
-
-set(CMAKE_SHARED_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
-set(CMAKE_EXE_LINKER_FLAGS "-nodefaultlibs -nostdlib -fPIC -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
-
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/darling")
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_library(openssh STATIC
 	openssh/ssh_api.c
@@ -155,7 +148,7 @@ add_library(openssh STATIC
 	openssh/platform-tracing.c
 )
 
-add_library(compat STATIC
+add_library(compat OBJECT
 	openssh/openbsd-compat/base64.c
 	openssh/openbsd-compat/basename.c
 	openssh/openbsd-compat/bcrypt_pbkdf.c
@@ -238,13 +231,22 @@ add_darling_executable(ssh
 	openssh/sshconnect1.c
 	openssh/sshconnect2.c
 	openssh/mux.c
+	$<TARGET_OBJECTS:compat>
 )
 
 target_link_libraries(ssh ${LIBS})
 install(TARGETS ssh DESTINATION libexec/darling/usr/bin)
 
+add_library(sshd_umac OBJECT openssh/umac.c)
+set_target_properties(sshd_umac PROPERTIES COMPILE_FLAGS "-DUMAC_OUTPUT_LEN=16 -Dumac_new=umac128_new \
+            -Dumac_update=umac128_update -Dumac_final=umac128_final \
+			-Dumac_delete=umac128_delete -Dumac_ctx=umac128_ctx")
+
 add_darling_executable(sshd
+	$<TARGET_OBJECTS:sshd_umac>
 	openssh/sshd.c
+	openssh/platform-pledge.c
+	openssh/monitor_fdpass.c
 	openssh/auth-rhosts.c
 	openssh/auth-passwd.c
 	openssh/auth-rsa.c
@@ -294,9 +296,56 @@ add_darling_executable(sshd
 	openssh/sandbox-capsicum.c
 	openssh/sandbox-pledge.c
 	openssh/sandbox-solaris.c
+	openssh/ttymodes.c
+	openssh/sshkey.c
+	openssh/opacket.c
+	openssh/xmalloc.c
+	$<TARGET_OBJECTS:compat>
+	openssh/uidswap.c
+	openssh/rsa.c
+	openssh/hostfile.c
+	openssh/kexgexs.c
+	openssh/dh.c
+	openssh/atomicio.c
+	openssh/packet.c
+	openssh/sshbuf-getput-basic.c
+	openssh/sshbuf-getput-crypto.c
+	openssh/sshbuf-misc.c
+	openssh/sshbuf.c
+	openssh/crc32.c
+	openssh/dispatch.c
+	openssh/ssh-ecdsa.c
+	openssh/digest-openssl.c
+	openssh/entropy.c
+	openssh/misc.c
+	openssh/mac.c
+	openssh/log.c
+	openssh/key.c
+	openssh/authfile.c
+	openssh/authfd.c
+	openssh/kex.c
+	openssh/canohost.c
+	openssh/compat.c
+	openssh/cipher.c
+	openssh/channels.c
+	openssh/bufaux.c
+	openssh/addrmatch.c
+	openssh/umac.c
+	openssh/ssh-dss.c
+	openssh/ssh-ed25519.c
+	openssh/ssh-rsa.c
+	openssh/cipher-ctr.c
+	openssh/hmac.c
+	openssh/match.c
+	openssh/chacha.c
+	openssh/kexc25519s.c
+	openssh/nchan.c
+	openssh/buffer.c
+	openssh/cipher-chachapoly.c
+	openssh/kexdhs.c
 )
 
-target_link_libraries(ssh ${LIBS} sandbox)
+target_link_libraries(sshd ${LIBS} sandbox z ssl098 crypto098)
 
 install(TARGETS sshd DESTINATION libexec/darling/usr/sbin)
 
@@ -304,12 +353,14 @@ add_darling_executable(scp
 	openssh/scp.c
 	openssh/progressmeter.c
 	openssh/bufaux.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(scp ${LIBS})
 install(TARGETS scp DESTINATION libexec/darling/usr/bin)
 
 add_darling_executable(ssh-add
 	openssh/ssh-add.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-add ${LIBS})
 install(TARGETS ssh-add DESTINATION libexec/darling/usr/bin)
@@ -317,12 +368,14 @@ install(TARGETS ssh-add DESTINATION libexec/darling/usr/bin)
 add_darling_executable(ssh-agent
 	openssh/ssh-agent.c
 	openssh/ssh-pkcs11-client.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-agent ${LIBS})
 install(TARGETS ssh-agent DESTINATION libexec/darling/usr/bin)
 
 add_darling_executable(ssh-keygen
 	openssh/ssh-keygen.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-keygen ${LIBS})
 install(TARGETS ssh-keygen DESTINATION libexec/darling/usr/bin)
@@ -330,6 +383,7 @@ install(TARGETS ssh-keygen DESTINATION libexec/darling/usr/bin)
 add_darling_executable(ssh-keysign
 	openssh/ssh-keysign.c
 	openssh/readconf.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-keysign ${LIBS})
 install(TARGETS ssh-keysign
@@ -339,6 +393,7 @@ install(TARGETS ssh-keysign
 add_darling_executable(ssh-pkcs11-helper
 	openssh/ssh-pkcs11-helper.c
 	openssh/ssh-pkcs11.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-pkcs11-helper ${LIBS})
 install(TARGETS ssh-pkcs11-helper
@@ -347,6 +402,7 @@ install(TARGETS ssh-pkcs11-helper
 
 add_darling_executable(ssh-keyscan
 	openssh/ssh-keyscan.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(ssh-keyscan ${LIBS})
 install(TARGETS ssh-keyscan DESTINATION libexec/darling/usr/bin)
@@ -355,6 +411,7 @@ add_darling_executable(sftp-server
 	openssh/sftp-server.c
 	openssh/sftp-common.c
 	openssh/sftp-server-main.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(sftp-server ${LIBS})
 install(TARGETS sftp-server
@@ -367,6 +424,7 @@ add_darling_executable(sftp
 	openssh/sftp-client.c
 	openssh/sftp-common.c
 	openssh/sftp-glob.c
+	$<TARGET_OBJECTS:compat>
 )
 target_link_libraries(sftp ${LIBS})
 install(TARGETS sftp DESTINATION libexec/darling/usr/bin)
