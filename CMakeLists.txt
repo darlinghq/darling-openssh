@@ -430,4 +430,4 @@ target_link_libraries(sftp ${LIBS})
 install(TARGETS sftp DESTINATION libexec/darling/usr/bin)
 
 # Manpages and shell scripts
-install(DIRECTORY usr DESTINATION libexec/darling)
+install(DIRECTORY usr DESTINATION libexec/darling USE_SOURCE_PERMISSIONS)
