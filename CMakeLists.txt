@@ -51,6 +51,8 @@ set(LIBEXEC_PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -fwrapv -fPIC")
 
+set(CMAKE_AR "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/ar/x86_64-apple-darwin11-ar")
+set(CMAKE_RANLIB "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/misc/ranlib")
 add_library(openssh STATIC
 	openssh/ssh_api.c
 	openssh/ssherr.c
@@ -147,6 +149,7 @@ add_library(openssh STATIC
 	openssh/platform-pledge.c
 	openssh/platform-tracing.c
 )
+add_dependencies(openssh ranlib x86_64-apple-darwin11-ar)
 
 add_library(compat OBJECT
 	openssh/openbsd-compat/base64.c
