@@ -1,7 +1,5 @@
 project(openssh)
 
-cmake_minimum_required(VERSION 2.4.0)
-
 # Automatically escape macros
 cmake_policy(SET CMP0005 NEW)
 
@@ -10,15 +8,6 @@ include(darling_exe)
 include_directories(BEFORE
 	${CMAKE_CURRENT_SOURCE_DIR}/gensrc
 	${CMAKE_CURRENT_SOURCE_DIR}/openssh
-)
-
-include_directories(
-	${CMAKE_SOURCE_DIR}/src/libc/include/FreeBSD
-	${CMAKE_SOURCE_DIR}/src/libc/include/NetBSD/
-	${CMAKE_SOURCE_DIR}/src/external/openssl/src/include
-	${CMAKE_SOURCE_DIR}/src/libinfo/include
-	${CMAKE_SOURCE_DIR}/src/external/zlib
-	${CMAKE_SOURCE_DIR}/src/sandbox
 )
 
 add_definitions(
@@ -35,7 +24,9 @@ add_definitions(
 )
 
 # Hide warnings
-add_definitions(
+add_compile_options(
+	-nostdinc
+	-fwrapv
 	-Wno-macro-redefined
 	-Wno-deprecated-declarations
 	-Wno-implicit-function-declaration
@@ -47,9 +38,6 @@ add_definitions(
 set(LIBS openssh crypto098 z resolv-darwin)
 
 set(LIBEXEC_PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostdinc -fwrapv -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -fwrapv -fPIC")
 
 set(CMAKE_AR "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/ar/x86_64-apple-darwin11-ar")
 set(CMAKE_RANLIB "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/misc/ranlib")
