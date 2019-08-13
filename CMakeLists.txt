@@ -41,7 +41,7 @@ set(LIBEXEC_PERMS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
 
 set(CMAKE_AR "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/ar/x86_64-apple-darwin11-ar")
 set(CMAKE_RANLIB "${CMAKE_BINARY_DIR}/src/external/cctools-port/cctools/misc/ranlib")
-add_library(openssh STATIC
+add_darling_static_library(openssh SOURCES
 	openssh/ssh_api.c
 	openssh/ssherr.c
 	openssh/sshbuf.c
@@ -139,7 +139,7 @@ add_library(openssh STATIC
 )
 add_dependencies(openssh ranlib x86_64-apple-darwin11-ar)
 
-add_library(compat OBJECT
+add_darling_object_library(compat
 	openssh/openbsd-compat/base64.c
 	openssh/openbsd-compat/basename.c
 	openssh/openbsd-compat/bcrypt_pbkdf.c
@@ -228,7 +228,7 @@ add_darling_executable(ssh
 target_link_libraries(ssh ${LIBS})
 install(TARGETS ssh DESTINATION libexec/darling/usr/bin)
 
-add_library(sshd_umac OBJECT openssh/umac.c)
+add_darling_object_library(sshd_umac openssh/umac.c)
 set_target_properties(sshd_umac PROPERTIES COMPILE_FLAGS "-DUMAC_OUTPUT_LEN=16 -Dumac_new=umac128_new \
             -Dumac_update=umac128_update -Dumac_final=umac128_final \
 			-Dumac_delete=umac128_delete -Dumac_ctx=umac128_ctx")
