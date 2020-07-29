@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2016/05/26 19:14:25 schwarze Exp $
-REGRESS_FAIL_EARLY= yes
-SUBDIR=	test_helper sshbuf sshkey bitmap kex hostkeys utf8
+#	$OpenBSD: Makefile,v 1.10 2018/03/03 03:16:17 djm Exp $
+
+REGRESS_FAIL_EARLY?=	yes
+SUBDIR=	test_helper sshbuf sshkey bitmap kex hostkeys utf8 match conversion
+SUBDIR+=authopt
 
 .include <bsd.subdir.mk>

@@ -4,10 +4,9 @@ NAME
      sshd M-bM-^@M-^S OpenSSH SSH daemon
 
 SYNOPSIS
-     sshd [-46DdeiqTt] [-b bits] [-C connection_spec]
-          [-c host_certificate_file] [-E log_file] [-f config_file]
-          [-g login_grace_time] [-h host_key_file] [-k key_gen_time]
-          [-o option] [-p port] [-u len]
+     sshd [-46DdeiqTt] [-C connection_spec] [-c host_certificate_file]
+          [-E log_file] [-f config_file] [-g login_grace_time]
+          [-h host_key_file] [-o option] [-p port] [-u len]
 
 DESCRIPTION
      sshd (OpenSSH Daemon) is the daemon program for ssh(1).  Together these
@@ -31,19 +30,17 @@ DESCRIPTION
 
      -6      Forces sshd to use IPv6 addresses only.
 
-     -b bits
-             Specifies the number of bits in the ephemeral protocol version 1
-             server key (default 1024).
-
      -C connection_spec
              Specify the connection parameters to use for the -T extended test
              mode.  If provided, any Match directives in the configuration
-             file that would apply to the specified user, host, and address
-             will be set before the configuration is written to standard
-             output.  The connection parameters are supplied as keyword=value
-             pairs.  The keywords are M-bM-^@M-^\userM-bM-^@M-^], M-bM-^@M-^\hostM-bM-^@M-^], M-bM-^@M-^\laddrM-bM-^@M-^], M-bM-^@M-^\lportM-bM-^@M-^], and
-             M-bM-^@M-^\addrM-bM-^@M-^].  All are required and may be supplied in any order,
+             file that would apply are applied before the configuration is
+             written to standard output.  The connection parameters are
+             supplied as keyword=value pairs and may be supplied in any order,
              either with multiple -C options or as a comma-separated list.
+             The keywords are M-bM-^@M-^\addr,M-bM-^@M-^] M-bM-^@M-^\userM-bM-^@M-^], M-bM-^@M-^\hostM-bM-^@M-^], M-bM-^@M-^\laddrM-bM-^@M-^], M-bM-^@M-^\lportM-bM-^@M-^], and
+             M-bM-^@M-^\rdomainM-bM-^@M-^] and correspond to source address, user, resolved source
+             host name, local address, local port number and routing domain
+             respectively.
 
      -c host_certificate_file
              Specifies a path to a certificate file to identify sshd during
@@ -80,28 +77,11 @@ DESCRIPTION
              Specifies a file from which a host key is read.  This option must
              be given if sshd is not run as root (as the normal host key files
              are normally not readable by anyone but root).  The default is
-             /etc/ssh/ssh_host_key for protocol version 1, and
-             /etc/ssh/ssh_host_dsa_key, /etc/ssh/ssh_host_ecdsa_key.
-             /etc/ssh/ssh_host_ed25519_key and /etc/ssh/ssh_host_rsa_key for
-             protocol version 2.  It is possible to have multiple host key
-             files for the different protocol versions and host key
-             algorithms.
+             /etc/ssh/ssh_host_ecdsa_key, /etc/ssh/ssh_host_ed25519_key and
+             /etc/ssh/ssh_host_rsa_key.  It is possible to have multiple host
+             key files for the different host key algorithms.
 
-     -i      Specifies that sshd is being run from inetd(8).  If SSH protocol
-             1 is enabled, sshd should not  normally be run from inetd because
-             it needs to generate the server key before it can respond to the
-             client, and this may take some time.  Clients may have to wait
-             too long if the key was regenerated every time.
-
-     -k key_gen_time
-             Specifies how often the ephemeral protocol version 1 server key
-             is regenerated (default 3600 seconds, or one hour).  The
-             motivation for regenerating the key fairly often is that the key
-             is not stored anywhere, and after about an hour it becomes
-             impossible to recover the key for decrypting intercepted
-             communications even if the machine is cracked into or physically
-             seized.  A value of zero indicates that the key will never be
-             regenerated.
+     -i      Specifies that sshd is being run from inetd(8).
 
      -o option
              Can be used to give options in the format used in the
@@ -138,40 +118,24 @@ DESCRIPTION
              into the utmp file.  -u0 may also be used to prevent sshd from
              making DNS requests unless the authentication mechanism or
              configuration requires it.  Authentication mechanisms that may
-             require DNS include RhostsRSAAuthentication,
-             HostbasedAuthentication, and using a from="pattern-list" option
-             in a key file.  Configuration options that require DNS include
-             using a USER@HOST pattern in AllowUsers or DenyUsers.
+             require DNS include HostbasedAuthentication and using a
+             from="pattern-list" option in a key file.  Configuration options
+             that require DNS include using a USER@HOST pattern in AllowUsers
+             or DenyUsers.
 
 AUTHENTICATION
-     The OpenSSH SSH daemon supports SSH protocols 1 and 2.  The default is to
-     use protocol 2 only, though this can be changed via the Protocol option
-     in sshd_config(5).  Protocol 1 should not be used and is only offered to
-     support legacy devices.
-
-     Each host has a host-specific key, used to identify the host.  Partial
-     forward security for protocol 1 is provided through an additional server
-     key, normally 1024 bits, generated when the server starts.  This key is
-     normally regenerated every hour if it has been used, and is never stored
-     on disk.  Whenever a client connects, the daemon responds with its public
-     host and server keys.  The client compares the RSA host key against its
-     own database to verify that it has not changed.  The client then
-     generates a 256-bit random number.  It encrypts this random number using
-     both the host key and the server key, and sends the encrypted number to
-     the server.  Both sides then use this random number as a session key
-     which is used to encrypt all further communications in the session.  The
-     rest of the session is encrypted using a conventional cipher, currently
-     Blowfish or 3DES, with 3DES being used by default.  The client selects
-     the encryption algorithm to use from those offered by the server.
-
-     For protocol 2, forward security is provided through a Diffie-Hellman key
+     The OpenSSH SSH daemon supports SSH protocol 2 only.  Each host has a
+     host-specific key, used to identify the host.  Whenever a client
+     connects, the daemon responds with its public host key.  The client
+     compares the host key against its own database to verify that it has not
+     changed.  Forward security is provided through a Diffie-Hellman key
      agreement.  This key agreement results in a shared session key.  The rest
      of the session is encrypted using a symmetric cipher, currently 128-bit
      AES, Blowfish, 3DES, CAST128, Arcfour, 192-bit AES, or 256-bit AES.  The
      client selects the encryption algorithm to use from those offered by the
      server.  Additionally, session integrity is provided through a
      cryptographic message authentication code (hmac-md5, hmac-sha1, umac-64,
-     umac-128, hmac-ripemd160, hmac-sha2-256 or hmac-sha2-512).
+     umac-128, hmac-sha2-256 or hmac-sha2-512).
 
      Finally, the server and the client enter an authentication dialog.  The
      client tries to authenticate itself using host-based authentication,
@@ -181,7 +145,7 @@ AUTHENTICATION
      Regardless of the authentication type, the account is checked to ensure
      that it is accessible.  An account is not accessible if it is locked,
      listed in DenyUsers or its group is listed in DenyGroups .  The
-     definition of a locked account is system dependant. Some platforms have
+     definition of a locked account is system dependent. Some platforms have
      their own account database (eg AIX) and some modify the passwd field (
      M-bM-^@M-^X*LK*M-bM-^@M-^Y on Solaris and UnixWare, M-bM-^@M-^X*M-bM-^@M-^Y on HP-UX, containing M-bM-^@M-^XNologinM-bM-^@M-^Y on
      Tru64, a leading M-bM-^@M-^X*LOCKED*M-bM-^@M-^Y on FreeBSD and a leading M-bM-^@M-^X!M-bM-^@M-^Y on most
@@ -271,27 +235,20 @@ AUTHORIZED_KEYS FILE FORMAT
      key authentication; if this option is not specified, the default is
      ~/.ssh/authorized_keys and ~/.ssh/authorized_keys2.  Each line of the
      file contains one key (empty lines and lines starting with a M-bM-^@M-^X#M-bM-^@M-^Y are
-     ignored as comments).  Protocol 1 public keys consist of the following
-     space-separated fields: options, bits, exponent, modulus, comment.
-     Protocol 2 public key consist of: options, keytype, base64-encoded key,
-     comment.  The options field is optional; its presence is determined by
-     whether the line starts with a number or not (the options field never
-     starts with a number).  The bits, exponent, modulus, and comment fields
-     give the RSA key for protocol version 1; the comment field is not used
-     for anything (but may be convenient for the user to identify the key).
-     For protocol version 2 the keytype is M-bM-^@M-^\ecdsa-sha2-nistp256M-bM-^@M-^],
+     ignored as comments).  Public keys consist of the following space-
+     separated fields: options, keytype, base64-encoded key, comment.  The
+     options field is optional.  The keytype is M-bM-^@M-^\ecdsa-sha2-nistp256M-bM-^@M-^],
      M-bM-^@M-^\ecdsa-sha2-nistp384M-bM-^@M-^], M-bM-^@M-^\ecdsa-sha2-nistp521M-bM-^@M-^], M-bM-^@M-^\ssh-ed25519M-bM-^@M-^], M-bM-^@M-^\ssh-dssM-bM-^@M-^] or
-     M-bM-^@M-^\ssh-rsaM-bM-^@M-^].
+     M-bM-^@M-^\ssh-rsaM-bM-^@M-^]; the comment field is not used for anything (but may be
+     convenient for the user to identify the key).
 
-     Note that lines in this file are usually several hundred bytes long
-     (because of the size of the public key encoding) up to a limit of 8
-     kilobytes, which permits DSA keys up to 8 kilobits and RSA keys up to 16
-     kilobits.  You don't want to type them in; instead, copy the
-     identity.pub, id_dsa.pub, id_ecdsa.pub, id_ed25519.pub, or the id_rsa.pub
-     file and edit it.
+     Note that lines in this file can be several hundred bytes long (because
+     of the size of the public key encoding) up to a limit of 8 kilobytes,
+     which permits DSA keys up to 8 kilobits and RSA keys up to 16 kilobits.
+     You don't want to type them in; instead, copy the id_dsa.pub,
+     id_ecdsa.pub, id_ed25519.pub, or the id_rsa.pub file and edit it.
 
-     sshd enforces a minimum RSA key modulus size for protocol 1 and protocol
-     2 keys of 768 bits.
+     sshd enforces a minimum RSA key modulus size of 1024 bits.
 
      The options (if present) consist of comma-separated option
      specifications.  No spaces are permitted, except within double quotes.
@@ -318,16 +275,23 @@ AUTHORIZED_KEYS FILE FORMAT
              pty; otherwise it is run without a tty.  If an 8-bit clean
              channel is required, one must not request a pty or should specify
              no-pty.  A quote may be included in the command by quoting it
-             with a backslash.  This option might be useful to restrict
-             certain public keys to perform just a specific operation.  An
-             example might be a key that permits remote backups but nothing
-             else.  Note that the client may specify TCP and/or X11 forwarding
-             unless they are explicitly prohibited.  The command originally
-             supplied by the client is available in the SSH_ORIGINAL_COMMAND
-             environment variable.  Note that this option applies to shell,
-             command or subsystem execution.  Also note that this command may
-             be superseded by either a sshd_config(5) ForceCommand directive
-             or a command embedded in a certificate.
+             with a backslash.
+
+             This option might be useful to restrict certain public keys to
+             perform just a specific operation.  An example might be a key
+             that permits remote backups but nothing else.  Note that the
+             client may specify TCP and/or X11 forwarding unless they are
+             explicitly prohibited, e.g. using the restrict key option.
+
+             The command originally supplied by the client is available in the
+             SSH_ORIGINAL_COMMAND environment variable.  Note that this option
+             applies to shell, command or subsystem execution.  Also note that
+             this command may be superseded by a sshd_config(5) ForceCommand
+             directive.
+
+             If a command is specified and a forced-command is embedded in a
+             certificate used for authentication, then the certificate will be
+             accepted only if the two commands are identical.
 
      environment="NAME=value"
              Specifies that the string is to be added to the environment when
@@ -335,7 +299,11 @@ AUTHORIZED_KEYS FILE FORMAT
              override other default environment values.  Multiple options of
              this type are permitted.  Environment processing is disabled by
              default and is controlled via the PermitUserEnvironment option.
-             This option is automatically disabled if UseLogin is enabled.
+
+     expiry-time="timespec"
+             Specifies a time after which the key will not be accepted.  The
+             time may be specified as a YYYYMMDD date or a YYYYMMDDHHMM[SS]
+             time in the system time-zone.
 
      from="pattern-list"
              Specifies that in addition to public key authentication, either
@@ -373,17 +341,32 @@ AUTHORIZED_KEYS FILE FORMAT
              Forbids X11 forwarding when this key is used for authentication.
              Any X11 forward requests by the client will return an error.
 
+     permitlisten="[host:]port"
+             Limit remote port forwarding with the ssh(1) -R option such that
+             it may only listen on the specified host (optional) and port.
+             IPv6 addresses can be specified by enclosing the address in
+             square brackets.  Multiple permitlisten options may be applied
+             separated by commas.  Hostnames may include wildcards as
+             described in the PATTERNS section in ssh_config(5).  A port
+             specification of * matches any port.  Note that the setting of
+             GatewayPorts may further restrict listen addresses.  Note that
+             ssh(1) will send a hostname of M-bM-^@M-^\localhostM-bM-^@M-^] if a listen host was
+             not specified when the forwarding was requested, and that this
+             name is treated differently to the explicit localhost addresses
+             M-bM-^@M-^\127.0.0.1M-bM-^@M-^] and M-bM-^@M-^\::1M-bM-^@M-^].
+
      permitopen="host:port"
-             Limit local port forwarding with ssh(1) -L such that it may only
-             connect to the specified host and port.  IPv6 addresses can be
-             specified by enclosing the address in square brackets.  Multiple
-             permitopen options may be applied separated by commas.  No
-             pattern matching is performed on the specified hostnames, they
-             must be literal domains or addresses.  A port specification of *
-             matches any port.
+             Limit local port forwarding with the ssh(1) -L option such that
+             it may only connect to the specified host and port.  IPv6
+             addresses can be specified by enclosing the address in square
+             brackets.  Multiple permitopen options may be applied separated
+             by commas.  No pattern matching is performed on the specified
+             hostnames, they must be literal domains or addresses.  A port
+             specification of * matches any port.
 
      port-forwarding
              Enable port forwarding previously disabled by the restrict
+             option.
 
      principals="principals"
              On a cert-authority line, specifies allowed principals for
@@ -421,9 +404,11 @@ AUTHORIZED_KEYS FILE FORMAT
         ssh-rsa AAAAB3Nza...LiPk== user@example.net
         from="*.sales.example.net,!pc.sales.example.net" ssh-rsa
         AAAAB2...19Q== john@example.net
-        command="dump /home",no-pty,no-port-forwarding ssh-dss
+        command="dump /home",no-pty,no-port-forwarding ssh-rsa
         AAAAC3...51R== example.net
-        permitopen="192.0.2.1:80",permitopen="192.0.2.2:25" ssh-dss
+        permitopen="192.0.2.1:80",permitopen="192.0.2.2:25" ssh-rsa
+        AAAAB5...21S==
+        permitlisten="localhost:8080",permitopen="localhost:22000" ssh-rsa
         AAAAB5...21S==
         tunnel="0",command="sh /etc/netstart tun0" ssh-rsa AAAA...==
         jane@example.net
@@ -436,12 +421,12 @@ SSH_KNOWN_HOSTS FILE FORMAT
      The /etc/ssh/ssh_known_hosts and ~/.ssh/known_hosts files contain host
      public keys for all known hosts.  The global file should be prepared by
      the administrator (optional), and the per-user file is maintained
-     automatically: whenever the user connects from an unknown host, its key
-     is added to the per-user file.
+     automatically: whenever the user connects to an unknown host, its key is
+     added to the per-user file.
 
      Each line in these files contains the following fields: markers
-     (optional), hostnames, bits, exponent, modulus, comment.  The fields are
-     separated by spaces.
+     (optional), hostnames, keytype, base64-encoded key, comment.  The fields
+     are separated by spaces.
 
      The marker is optional, but if it is present then it must be one of
      M-bM-^@M-^\@cert-authorityM-bM-^@M-^], to indicate that the line contains a certification
@@ -450,13 +435,19 @@ SSH_KNOWN_HOSTS FILE FORMAT
      should be used on a key line.
 
      Hostnames is a comma-separated list of patterns (M-bM-^@M-^X*M-bM-^@M-^Y and M-bM-^@M-^X?M-bM-^@M-^Y act as
-     wildcards); each pattern in turn is matched against the canonical host
-     name (when authenticating a client) or against the user-supplied name
-     (when authenticating a server).  A pattern may also be preceded by M-bM-^@M-^X!M-bM-^@M-^Y to
-     indicate negation: if the host name matches a negated pattern, it is not
-     accepted (by that line) even if it matched another pattern on the line.
-     A hostname or address may optionally be enclosed within M-bM-^@M-^X[M-bM-^@M-^Y and M-bM-^@M-^X]M-bM-^@M-^Y
-     brackets then followed by M-bM-^@M-^X:M-bM-^@M-^Y and a non-standard port number.
+     wildcards); each pattern in turn is matched against the host name.  When
+     sshd is authenticating a client, such as when using
+     HostbasedAuthentication, this will be the canonical client host name.
+     When ssh(1) is authenticating a server, this will be the host name given
+     by the user, the value of the ssh(1) HostkeyAlias if it was specified, or
+     the canonical server hostname if the ssh(1) CanonicalizeHostname option
+     was used.
+
+     A pattern may also be preceded by M-bM-^@M-^X!M-bM-^@M-^Y to indicate negation: if the host
+     name matches a negated pattern, it is not accepted (by that line) even if
+     it matched another pattern on the line.  A hostname or address may
+     optionally be enclosed within M-bM-^@M-^X[M-bM-^@M-^Y and M-bM-^@M-^X]M-bM-^@M-^Y brackets then followed by M-bM-^@M-^X:M-bM-^@M-^Y
+     and a non-standard port number.
 
      Alternately, hostnames may be stored in a hashed form which hides host
      names and addresses should the file's contents be disclosed.  Hashed
@@ -464,9 +455,10 @@ SSH_KNOWN_HOSTS FILE FORMAT
      appear on a single line and none of the above negation or wildcard
      operators may be applied.
 
-     Bits, exponent, and modulus are taken directly from the RSA host key;
-     they can be obtained, for example, from /etc/ssh/ssh_host_key.pub.  The
-     optional comment field continues to the end of the line, and is not used.
+     The keytype and base64-encoded key are taken directly from the host key;
+     they can be obtained, for example, from /etc/ssh/ssh_host_rsa_key.pub.
+     The optional comment field continues to the end of the line, and is not
+     used.
 
      Lines starting with M-bM-^@M-^X#M-bM-^@M-^Y and empty lines are ignored as comments.
 
@@ -493,9 +485,9 @@ SSH_KNOWN_HOSTS FILE FORMAT
 
      Note that the lines in these files are typically hundreds of characters
      long, and you definitely don't want to type in the host keys by hand.
-     Rather, generate them by a script, ssh-keyscan(1) or by taking
-     /etc/ssh/ssh_host_key.pub and adding the host names at the front.
-     ssh-keygen(1) also offers some basic automated editing for
+     Rather, generate them by a script, ssh-keyscan(1) or by taking, for
+     example, /etc/ssh/ssh_host_rsa_key.pub and adding the host names at the
+     front.  ssh-keygen(1) also offers some basic automated editing for
      ~/.ssh/known_hosts including removing hosts matching a host name and
      converting all host names to their hashed representations.
 
@@ -598,8 +590,6 @@ FILES
              allows host-based authentication without permitting login with
              rlogin/rsh.
 
-     /etc/ssh/ssh_host_key
-     /etc/ssh/ssh_host_dsa_key
      /etc/ssh/ssh_host_ecdsa_key
      /etc/ssh/ssh_host_ed25519_key
      /etc/ssh/ssh_host_rsa_key
@@ -608,8 +598,6 @@ FILES
              not accessible to others.  Note that sshd does not start if these
              files are group/world-accessible.
 
-     /etc/ssh/ssh_host_key.pub
-     /etc/ssh/ssh_host_dsa_key.pub
      /etc/ssh/ssh_host_ecdsa_key.pub
      /etc/ssh/ssh_host_ed25519_key.pub
      /etc/ssh/ssh_host_rsa_key.pub
@@ -662,4 +650,4 @@ AUTHORS
      versions 1.5 and 2.0.  Niels Provos and Markus Friedl contributed support
      for privilege separation.
 
-OpenBSD 6.0                    February 17, 2016                   OpenBSD 6.0
+OpenBSD 6.4                      July 22, 2018                     OpenBSD 6.4

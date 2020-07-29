@@ -39,6 +39,10 @@
 #include "match.h"
 #include "log.h"
 
+#ifdef __APPLE_MEMBERSHIP__
+int32_t getgrouplist_2(const char *, gid_t, gid_t **);
+#endif
+
 static int ngroups;
 static char **groups_byname;
 
@@ -50,22 +54,39 @@ int
 ga_init(const char *user, gid_t base)
 {
 	gid_t *groups_bygid;
-	int i, j;
+	int i, j, retry = 0;
 	struct group *gr;
 
 	if (ngroups > 0)
 		ga_free();
 
+#ifdef __APPLE_MEMBERSHIP__
+	(void)retry;
+	if ((ngroups = getgrouplist_2(user, base, &groups_bygid)) == -1) {
+		logit("getgrouplist_2 failed");
+		/*
+		 * getgrouplist_2 only fails on memory error; in which case
+		 * groups_bygid will be left NULL so no need to free.
+		 */
+		return 0;
+	}
+	groups_byname = xcalloc(ngroups, sizeof(*groups_byname));
+#else
 	ngroups = NGROUPS_MAX;
 #if defined(HAVE_SYSCONF) && defined(_SC_NGROUPS_MAX)
 	ngroups = MAX(NGROUPS_MAX, sysconf(_SC_NGROUPS_MAX));
 #endif
 
 	groups_bygid = xcalloc(ngroups, sizeof(*groups_bygid));
+	while (getgrouplist(user, base, groups_bygid, &ngroups) == -1) {
+		if (retry++ > 0)
+			fatal("getgrouplist: groups list too small");
+		groups_bygid = xreallocarray(groups_bygid, ngroups,
+		    sizeof(*groups_bygid));
+	}
 	groups_byname = xcalloc(ngroups, sizeof(*groups_byname));
 
-	if (getgrouplist(user, base, groups_bygid, &ngroups) == -1)
-		logit("getgrouplist: groups list too small");
+#endif /* __APPLE_MEMBERSHIP__ */
 	for (i = 0, j = 0; i < ngroups; i++)
 		if ((gr = getgrgid(groups_bygid[i])) != NULL)
 			groups_byname[j++] = xstrdup(gr->gr_name);
@@ -124,5 +145,6 @@ ga_free(void)
 			free(groups_byname[i]);
 		ngroups = 0;
 		free(groups_byname);
+		groups_byname = NULL;
 	}
 }

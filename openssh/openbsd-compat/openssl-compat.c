@@ -1,5 +1,3 @@
-/* $Id: openssl-compat.c,v 1.19 2014/07/02 05:28:07 djm Exp $ */
-
 /*
  * Copyright (c) 2005 Darren Tucker <dtucker@zip.com.au>
  *
@@ -55,7 +53,7 @@ ssh_compatible_openssl(long headerver, long libver)
 		mask = 0xfffff00fL; /* major,minor,fix,status */
 		return (headerver & mask) == (libver & mask);
 	}
-	
+
 	/*
 	 * For versions >= 1.0.0, major,minor,status must match and library
 	 * fix version must be equal to or newer than the header.
@@ -77,7 +75,13 @@ ssh_OpenSSL_add_all_algorithms(void)
 	/* Enable use of crypto hardware */
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
+
+#if OPENSSL_VERSION_NUMBER < 0x10001000L
 	OPENSSL_config(NULL);
+#else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS |
+	    OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 }
 #endif
 
