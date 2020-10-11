@@ -336,7 +336,7 @@ add_darling_executable(sshd
 	openssh/kexdhs.c
 )
 
-target_link_libraries(sshd ${LIBS} sandbox z ssl098 crypto098)
+target_link_libraries(sshd ${LIBS} system_sandbox z ssl098 crypto098)
 
 install(TARGETS sshd DESTINATION libexec/darling/usr/sbin)
 
