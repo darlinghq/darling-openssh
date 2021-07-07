@@ -483,6 +483,14 @@ InstallSymlink("ssh" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/slogin")
 install(TARGETS sshd DESTINATION libexec/darling/usr/sbin)
 install(FILES com.openssh.sshd.plist DESTINATION libexec/darling/System/Library/LaunchDaemons RENAME ssh.plist)
 install(FILES pam.d/sshd DESTINATION libexec/darling/private/etc/pam.d)
+install(
+	FILES
+		openssh/ssh_config
+		openssh/sshd_config
+		openssh/moduli
+	DESTINATION
+		libexec/darling/private/etc/ssh
+)
 
 install(TARGETS scp DESTINATION libexec/darling/usr/bin)
 
