@@ -7,6 +7,7 @@ include(darling_exe)
 
 include_directories(BEFORE
 	${CMAKE_CURRENT_SOURCE_DIR}/openssh
+	${CMAKE_CURRENT_SOURCE_DIR}/openssh/openbsd-compat
 )
 
 add_compile_definitions(
@@ -80,7 +81,6 @@ add_darling_static_library(libssh FAT SOURCES
 	openssh/cipher.c
 	openssh/cleanup.c
 	openssh/compat.c
-	openssh/crc32.c
 	openssh/dh.c
 	openssh/digest-openssl.c
 	openssh/dispatch.c
@@ -96,17 +96,13 @@ add_darling_static_library(libssh FAT SOURCES
 	openssh/hostfile.c
 	openssh/kex.c
 	openssh/kexc25519.c
-	openssh/kexc25519c.c
-	openssh/kexc25519s.c
 	openssh/kexdh.c
-	openssh/kexdhc.c
-	openssh/kexdhs.c
 	openssh/kexecdh.c
-	openssh/kexecdhc.c
-	openssh/kexecdhs.c
+	openssh/kexgen.c
 	openssh/kexgex.c
 	openssh/kexgexc.c
 	openssh/kexgexs.c
+	openssh/kexsntrup4591761x25519.c
 	openssh/krl.c
 	openssh/log.c
 	openssh/mac.c
@@ -116,13 +112,13 @@ add_darling_static_library(libssh FAT SOURCES
 	openssh/monitor_fdpass.c
 	openssh/msg.c
 	openssh/nchan.c
-	openssh/opacket.c
 	openssh/packet.c
 	openssh/poly1305.c
 	openssh/readpass.c
 	openssh/rijndael.c
 	openssh/sc25519.c
 	openssh/smult_curve25519_ref.c
+	openssh/sntrup4591761.c
 	openssh/ssh_api.c
 	openssh/ssh-dss.c
 	openssh/ssh-ecdsa.c
@@ -141,7 +137,6 @@ add_darling_static_library(libssh FAT SOURCES
 	openssh/uidswap.c
 	openssh/umac.c
 	openssh/umac128.c
-	openssh/uuencode.c
 	openssh/verify.c
 	openssh/xmalloc.c
 	openssh/xmss_commons.c
@@ -149,6 +144,7 @@ add_darling_static_library(libssh FAT SOURCES
 	openssh/xmss_hash_address.c
 	openssh/xmss_hash.c
 	openssh/xmss_wots.c
+	openssh/utf8.c
 )
 set_target_properties(libssh PROPERTIES
 	OUTPUT_NAME "ssh"
@@ -167,11 +163,11 @@ add_darling_static_library(openbsd_compat FAT SOURCES
 	openssh/cipher-ctr.c
 	openssh/cipher.c
 	openssh/compat.c
-	openssh/crc32.c
 	openssh/fatal.c
 	openssh/hostfile.c
 	openssh/match.c
 	openssh/moduli.c
+	openssh/sftp-realpath.c
 	openssh/openbsd-compat/arc4random.c
 	openssh/openbsd-compat/base64.c
 	openssh/openbsd-compat/basename.c
@@ -207,6 +203,7 @@ add_darling_static_library(openbsd_compat FAT SOURCES
 	openssh/openbsd-compat/inet_ntop.c
 	openssh/openbsd-compat/kludge-fd_set.c
 	openssh/openbsd-compat/libressl-api-compat.c
+	openssh/openbsd-compat/memmem.c
 	openssh/openbsd-compat/md5.c
 	openssh/openbsd-compat/mktemp.c
 	openssh/openbsd-compat/openssl-compat.c
@@ -218,7 +215,6 @@ add_darling_static_library(openbsd_compat FAT SOURCES
 	openssh/openbsd-compat/port-uw.c
 	openssh/openbsd-compat/readpassphrase.c
 	openssh/openbsd-compat/reallocarray.c
-	openssh/openbsd-compat/realpath.c
 	openssh/openbsd-compat/rmd160.c
 	openssh/openbsd-compat/rresvport.c
 	openssh/openbsd-compat/setenv.c
@@ -301,10 +297,8 @@ add_darling_executable(sshd
 	openssh/groupaccess.c
 	openssh/gss-serv-krb5.c
 	openssh/gss-serv.c
-	openssh/kexc25519s.c
-	openssh/kexdhs.c
-	openssh/kexecdhs.c
 	openssh/kexgexs.c
+	openssh/kexsntrup4591761x25519.c
 	openssh/loginrec.c
 	openssh/md5crypt.c
 	openssh/monitor_wrap.c
@@ -324,6 +318,7 @@ add_darling_executable(sshd
 	openssh/sshd.c
 	openssh/sshlogin.c
 	openssh/sshpty.c
+	openssh/sshsig.c
 )
 
 target_link_libraries(sshd
@@ -384,6 +379,7 @@ target_link_libraries(ssh-agent
 add_darling_executable(ssh-keygen
 	openssh/platform-misc.c
 	openssh/ssh-keygen.c
+	openssh/sshsig.c
 	openssh/utf8.c
 )
 target_link_libraries(ssh-keygen
@@ -456,6 +452,7 @@ add_darling_executable(sftp
 	openssh/sftp-common.c
 	openssh/sftp-glob.c
 	openssh/sftp.c
+	openssh/sntrup4591761.c
 	openssh/utf8.c
 )
 target_link_libraries(sftp
