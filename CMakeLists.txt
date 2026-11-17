@@ -32,7 +32,7 @@ set(BASE_LIBS
 	Kerberos
 	OpenDirectory
 	bsm.0
-	crypto44
+	crypto46
 	pam.2
 	z
 )
